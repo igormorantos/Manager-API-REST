@@ -1,0 +1,14 @@
+﻿using Manager.Domain.Entity;
+using System.Collections.Generic;
+
+namespace Manager.API.ViewModels
+{
+    public class ResultViewModel
+    {
+        public string Message { get; set; }
+
+        public bool Success { get; set; }
+
+        public dynamic Data { get; set; }
+    }
+}
