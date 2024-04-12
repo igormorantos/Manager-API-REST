@@ -1,13 +1,13 @@
+<h1 align="center">Manager API REST</h1>
+<p align="center"><i>Uma API de gerenciamento de usuarios, criada com boas práticas de desenvolvimento e arquitetura!.</i></p>
+
 <p align="center">
   <img src="http://img.shields.io/badge/Licença-MIT-green"/>
   <img src="https://img.shields.io/badge/Linguagem-CSharp-purple"/>
   <img src="http://img.shields.io/badge/.NET-8-blue"/>
-   <img src="http://img.shields.io/badge/Status-Em Desenvolvimento-green "/>
+  <img src="https://img.shields.io/github/last-commit/igormorantos/Manager-API-REST"/>
+  <img src="http://img.shields.io/badge/Status-Em Desenvolvimento-green "/>
 </p>
-
-<h1 align="center">Manager API REST</h1>
-<p align="center"><i>Uma API de gerenciamento de usuarios, criada com boas práticas de desenvolvimento e arquitetura!.</i></p>
-
 
 ##  Sobre o Projeto
 This is a repository used as a base to show the operation of Issues, Discussions, Wiki and other GitHub resources in addition to code versioning..
