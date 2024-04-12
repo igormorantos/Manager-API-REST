@@ -1,6 +1,8 @@
 ﻿using Manager.API.Token;
 using Manager.API.Utils;
 using Manager.API.ViewModels;
+using Manager.Core.Communication.MessagesNotifications;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -8,52 +10,41 @@ using System;
 namespace Manager.API.Controllers
 {
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController : BaseController
     {
         private readonly IConfiguration _configuration;
+        private readonly ITokenService _tokenService;
 
-        private readonly ITokenGenerator _tokenGenerator;
-
-        public AuthController(IConfiguration configuration, ITokenGenerator tokenGenerator)
+        public AuthController(
+            IConfiguration configuration,
+            ITokenService tokenService,
+            INotificationHandler<DomainNotification> domainNotificationHandler)
+            : base(domainNotificationHandler)
         {
             _configuration = configuration;
-            _tokenGenerator = tokenGenerator;
+            _tokenService = tokenService;
         }
 
         [HttpPost]
         [Route("/api/v1/auth/login")]
-
         public IActionResult Login([FromBody] LoginViewModel loginViewModel)
         {
-            try
-            {
-                var tokenLogin = _configuration["Jwt:Login"];
-                var tokenPassword = _configuration["Jwt:Password"];
+            var tokenLogin = _configuration["Jwt:Login"];
+            var tokenPassword = _configuration["Jwt:Password"];
 
-                if(loginViewModel.Login == tokenLogin && loginViewModel.Password == tokenPassword)
+            if (loginViewModel.Login == tokenLogin && loginViewModel.Password == tokenPassword)
+                return Ok(new ResultViewModel
                 {
-                    return Ok(new ResultViewModel
+                    Message = "Usuário autenticado com sucesso!",
+                    Success = true,
+                    Data = new
                     {
-                        Message = "Usuário autenticado com sucesso!",
-                        Success = true,
-                        Data = new
-                        {
-                            Token = _tokenGenerator.GenereteToken(),
-                            TokenExpires = DateTime.UtcNow.AddHours(int.Parse(_configuration["Jwt:HoursToExpire"]))
-                        }
-
-                    });
-                }
-                else
-                {
-                    return StatusCode(401, Responses.UnauthorizedErrorMessage());
-                }
-            }
-            catch (System.Exception)
-            {
-
-                throw;
-            }
+                        Token = _tokenService.GenereteToken(),
+                        TokenExpires = DateTime.UtcNow.AddHours(int.Parse(_configuration["Jwt:HoursToExpire"]))
+                    }
+                });
+            else
+                return StatusCode(401, Responses.UnauthorizedErrorMessage());
         }
     }
 }
