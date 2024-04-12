@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
-using Manager.API.Utils;
 using Manager.API.ViewModels;
 using Manager.API.ViewModes;
-using Manager.Core.Exceptions;
+using Manager.Core.Communication.MessagesNotifications;
 using Manager.Services.DTO;
 using Manager.Services.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -12,90 +12,70 @@ using System.Threading.Tasks;
 
 namespace Manager.API.Controllers
 {
-    [ApiController]
-    public class UserController : ControllerBase
+        [ApiController]
+        public class UserController : BaseController
     {
-        private readonly IUserService _userService;
-        private readonly IMapper _mapper;
 
-        public UserController(IUserService userService, IMapper mapper)
-        {
-            _userService = userService;
-            _mapper = mapper;
-        }
+            private readonly IMapper _mapper;
+            private readonly IUserService _userService;
 
-        [HttpPost]
-        [Authorize]
-        [Route("/api/v1/users/create")]
-        public async Task<IActionResult> CreateAsync([FromBody] CreateUserViewModel userViewModel)
-        {
-            try
+            public UserController(
+                IMapper mapper,
+                IUserService userService,
+                INotificationHandler<DomainNotification> domainNotificationHandler)
+                : base(domainNotificationHandler)
             {
+                _mapper = mapper;
+                _userService = userService;
+            }
 
+            [HttpPost]
+            [Authorize]
+            [Route("/api/v1/users/create")]
+            public async Task<IActionResult> CreateAsync([FromBody] CreateUserViewModel userViewModel)
+            {
                 var userDTO = _mapper.Map<UserDTO>(userViewModel);
                 var userCreated = await _userService.CreateAsync(userDTO);
 
-                // if (HasNotifications())
-                // return Result();
+                if (HasNotifications())
+                    return Result();
 
                 return Ok(new ResultViewModel
                 {
                     Message = "Usuário criado com sucesso!",
                     Success = true,
-                    Data = userCreated
+                    Data = userCreated.Value
                 });
             }
-            catch (DomainException ex)
-            {
-                return BadRequest(Responses.DomainErrorMessage(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, Responses.ApplicationErrorMessage(ex));
-            }
-        }
 
-        [HttpPut]
-        [Authorize]
-        [Route("/api/v1/users/update")]
-        public async Task<IActionResult> UpdateAsync([FromBody] UpdateUserViewModel userViewModel)
-        {
-            try
+            [HttpPut]
+            [Authorize]
+            [Route("/api/v1/users/update")]
+            public async Task<IActionResult> UpdateAsync([FromBody] UpdateUserViewModel userViewModel)
             {
                 var userDTO = _mapper.Map<UserDTO>(userViewModel);
                 var userUpdated = await _userService.UpdateAsync(userDTO);
 
-                //if (HasNotifications())
-                //return Result();
+                if (HasNotifications())
+                    return Result();
 
                 return Ok(new ResultViewModel
                 {
                     Message = "Usuário atualizado com sucesso!",
                     Success = true,
-                    Data = userUpdated
+                    Data = userUpdated.Value
                 });
             }
-            catch (DomainException ex)
-            {
-                return BadRequest(Responses.DomainErrorMessage(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, Responses.ApplicationErrorMessage(ex));
-            }
-        }
 
-        [HttpDelete]
-        [Authorize]
-        [Route("/api/v1/users/remove/{id}")]
-        public async Task<IActionResult> RemoveAsync(Guid id)
-        {
-            try
+            [HttpDelete]
+            [Authorize]
+            [Route("/api/v1/users/remove/{id}")]
+            public async Task<IActionResult> RemoveAsync(Guid id)
             {
                 await _userService.RemoveAsync(id);
 
-                //if (HasNotifications())
-                //  return Result();
+                if (HasNotifications())
+                    return Result();
 
                 return Ok(new ResultViewModel
                 {
@@ -104,140 +84,97 @@ namespace Manager.API.Controllers
                     Data = null
                 });
             }
-            catch (DomainException ex)
-            {
-                return BadRequest(Responses.DomainErrorMessage(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, Responses.ApplicationErrorMessage(ex));
-            }
-        }
 
-        [HttpGet]
-        [Authorize]
-        [Route("/api/v1/users/get/{id}")]
-        public async Task<IActionResult> Get(Guid id)
-        {
-            try
+            [HttpGet]
+            [Authorize]
+            [Route("/api/v1/users/get/{id}")]
+            public async Task<IActionResult> GetAsync(Guid id)
             {
-                var user = await _userService.Get(id);
+                var user = await _userService.GetAsync(id);
 
-                // if (HasNotifications())
-                //   return Result();
+                if (HasNotifications())
+                    return Result();
 
-                if (user == null)
+                if (!user.HasValue)
                     return Ok(new ResultViewModel
                     {
                         Message = "Nenhum usuário foi encontrado com o ID informado.",
                         Success = true,
-                        Data = user
+                        Data = user.Value
                     });
 
                 return Ok(new ResultViewModel
                 {
                     Message = "Usuário encontrado com sucesso!",
                     Success = true,
-                    Data = user
+                    Data = user.Value
                 });
             }
-            catch (DomainException ex)
-            {
-                return BadRequest(Responses.DomainErrorMessage(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, Responses.ApplicationErrorMessage(ex));
-            }
-        }
 
 
-        [HttpGet]
-        [Authorize]
-        [Route("/api/v1/users/get-all")]
-        public async Task<IActionResult> GetAll()
-        {
-            try
+            [HttpGet]
+            [Authorize]
+            [Route("/api/v1/users/get-all")]
+            public async Task<IActionResult> GetAsync()
             {
-                var allUsers = await _userService.GetAll();
+                var allUsers = await _userService.GetAllAsync();
 
-                //if (HasNotifications())
-                //  return Result();
+                if (HasNotifications())
+                    return Result();
 
                 return Ok(new ResultViewModel
                 {
                     Message = "Usuários encontrados com sucesso!",
                     Success = true,
-                    Data = allUsers
+                    Data = allUsers.Value
                 });
             }
-            catch (DomainException ex)
-            {
-                return BadRequest(Responses.DomainErrorMessage(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, Responses.ApplicationErrorMessage(ex));
-            }
-        }
 
 
-        [HttpGet]
-        [Authorize]
-        [Route("/api/v1/users/get-by-email")]
-        public async Task<IActionResult> GetByEmailAsync([FromQuery] string email)
-        {
-            try
+            [HttpGet]
+            [Authorize]
+            [Route("/api/v1/users/get-by-email")]
+            public async Task<IActionResult> GetByEmailAsync([FromQuery] string email)
             {
                 var user = await _userService.GetByEmailAsync(email);
 
-                //if (HasNotifications())
-                // return Result();
+                if (HasNotifications())
+                    return Result();
 
-                if (user == null)
+                if (!user.HasValue)
                     return Ok(new ResultViewModel
                     {
                         Message = "Nenhum usuário foi encontrado com o email informado.",
                         Success = true,
-                        Data = user
+                        Data = user.Value
                     });
 
                 return Ok(new ResultViewModel
                 {
                     Message = "Usuário encontrado com sucesso!",
                     Success = true,
-                    Data = user
+                    Data = user.Value
                 });
             }
-            catch (DomainException ex)
-            {
-                return BadRequest(Responses.DomainErrorMessage(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, Responses.ApplicationErrorMessage(ex));
-            }
-        }
 
-        [HttpGet]
-        [Authorize]
-        [Route("/api/v1/users/search-by-name")]
-        public async Task<IActionResult> SearchByNameAsync([FromQuery] string name)
-        {
-            try
+            [HttpGet]
+            [Authorize]
+            [Route("/api/v1/users/search-by-name")]
+            public async Task<IActionResult> SearchByNameAsync([FromQuery] string name)
             {
-                
                 var allUsers = await _userService.SearchByNameAsync(name);
 
-                if (allUsers == null)
-                {
+                if (HasNotifications())
+                    return Result();
+
+                if (!allUsers.HasValue)
                     return Ok(new ResultViewModel
                     {
                         Message = "Nenhum usuário foi encontrado com o nome informado",
-                        Success = false,
+                        Success = true,
                         Data = null
                     });
-                }
+
                 return Ok(new ResultViewModel
                 {
                     Message = "Usuário encontrado com sucesso!",
@@ -245,31 +182,19 @@ namespace Manager.API.Controllers
                     Data = allUsers
                 });
             }
-            catch (DomainException ex)
-            {
-                return BadRequest(Responses.DomainErrorMessage(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, Responses.ApplicationErrorMessage(ex));
-            }
-
-        }
 
 
-        [HttpGet]
-        [Authorize]
-        [Route("/api/v1/users/search-by-email")]
-        public async Task<IActionResult> SearchByEmailAsync([FromQuery] string email)
-        {
-            try
+            [HttpGet]
+            [Authorize]
+            [Route("/api/v1/users/search-by-email")]
+            public async Task<IActionResult> SearchByEmailAsync([FromQuery] string email)
             {
                 var allUsers = await _userService.SearchByEmailAsync(email);
 
-                //if (HasNotifications())
-                //  return Result();
+                if (HasNotifications())
+                    return Result();
 
-                if (allUsers == null)
+                if (!allUsers.HasValue)
                     return Ok(new ResultViewModel
                     {
                         Message = "Nenhum usuário foi encontrado com o email informado",
@@ -281,20 +206,8 @@ namespace Manager.API.Controllers
                 {
                     Message = "Usuário encontrado com sucesso!",
                     Success = true,
-                    Data = allUsers          
-
+                    Data = allUsers
                 });
             }
-            catch (DomainException ex)
-            {
-                return BadRequest(Responses.DomainErrorMessage(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, Responses.ApplicationErrorMessage(ex));
-            }
         }
-
-
     }
-}
