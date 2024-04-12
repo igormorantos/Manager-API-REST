@@ -6,11 +6,11 @@ namespace Manager.API.Utils
 {
     public static class Responses
     {
-        public static ResultViewModel ApplicationErrorMessage(Exception ex)
+        public static ResultViewModel ApplicationErrorMessage()
         {
             return new ResultViewModel
             {
-                Message = "Ocorreu algum erro interno na aplicação, por favor tente novamente." + ex.Message,
+                Message = "Ocorreu algum erro interno na aplicação, por favor tente novamente.",
                 Success = false,
                 Data = null
             };
