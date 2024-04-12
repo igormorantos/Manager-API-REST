@@ -1,7 +1,13 @@
 ﻿using AutoMapper;
 using EscNet.Cryptography.Algorithms;
 using EscNet.Cryptography.Interfaces;
+using EscNet.Hashers.Interfaces.Algorithms;
+using Manager.Core.Communication.Mediator.Interfaces;
+using Manager.Core.Communication.MessagesNotifications;
+using Manager.Core.Enum;
 using Manager.Core.Exceptions;
+using Manager.Core.Structs;
+using Manager.Core.ValidationMessage;
 using Manager.Domain.Entity;
 using Manager.Infrastructure.Interfaces;
 using Manager.Infrastructure.Repositories;
@@ -19,93 +25,140 @@ namespace Manager.Services.Services
     public class UserService : IUserService
     {
         private readonly IMapper _mapper;
-        private readonly IRijndaelCryptography _rijndaelCryptography;
         private readonly IUserRepository _userRepository;
+        private readonly IArgon2IdHasher _argon2IdHasher;
+        private readonly IMediatorHandler _mediator;
 
-        public UserService(IMapper mapper, IUserRepository userRepository, IRijndaelCryptography rijndaelCryptography)
+        public UserService(
+            IMapper mapper,
+            IUserRepository userRepository,
+            IArgon2IdHasher argon2IdHasher,
+            IMediatorHandler mediator)
         {
             _mapper = mapper;
-            _rijndaelCryptography = rijndaelCryptography;
             _userRepository = userRepository;
+            _argon2IdHasher = argon2IdHasher;
+            _mediator = mediator;
         }
 
-        public async Task<UserDTO> CreateAsync(UserDTO userDTO)
+        public async Task<Optional<UserDTO>> CreateAsync(UserDTO userDTO)
         {
-            var userExists = await _userRepository.GetByEmail(userDTO.Email);
+            Expression<Func<User, bool>> filter = user
+                => user.Email.ToLower() == userDTO.Email.ToLower();
+
+            var userExists = await _userRepository.GetAsync(filter);
 
             if (userExists != null)
             {
-                throw new DomainException("Já existe um usuario cadastrado com esse email");
+                await _mediator.PublishDomainNotificationAsync(new DomainNotification(
+                    ErrorMessages.UserAlreadyExists,
+                    DomainNotificationType.UserAlreadyExists));
+
+                return new Optional<UserDTO>();
             }
 
             var user = _mapper.Map<User>(userDTO);
             user.Validate();
-            user.ChangePassword(_rijndaelCryptography.Encrypt(user.Password));
 
-            var userCreated = await _userRepository.Create(user);
+            if (!user.IsValid)
+            {
+                await _mediator.PublishDomainNotificationAsync(new DomainNotification(
+                   ErrorMessages.UserInvalid(user.ErrorsToString()),
+                   DomainNotificationType.UserInvalid));
+
+                return new Optional<UserDTO>();
+            }
+
+            user.SetPassword(_argon2IdHasher.Hash(user.Password));
+
+            var userCreated = await _userRepository.CreateAsync(user);
 
             return _mapper.Map<UserDTO>(userCreated);
         }
 
-        public async Task<UserDTO> UpdateAsync(UserDTO userDTO)
+        public async Task<Optional<UserDTO>> UpdateAsync(UserDTO userDTO)
         {
-            var userExists = await _userRepository.Get(userDTO.Id);
+            var userExists = await _userRepository.GetAsync(userDTO.Id);
 
             if (userExists == null)
             {
-                throw new DomainException("Não existe o usuario cadastrado com o dado informado");
+                await _mediator.PublishDomainNotificationAsync(new DomainNotification(
+                   ErrorMessages.UserNotFound,
+                   DomainNotificationType.UserNotFound));
+
+                return new Optional<UserDTO>();
             }
 
             var user = _mapper.Map<User>(userDTO);
             user.Validate();
-            user.ChangePassword(_rijndaelCryptography.Encrypt(user.Password));
 
-            var userCreated = await _userRepository.Update(user);
+            if (!user.IsValid)
+            {
+                await _mediator.PublishDomainNotificationAsync(new DomainNotification(
+                   ErrorMessages.UserInvalid(user.ErrorsToString()),
+                   DomainNotificationType.UserInvalid));
 
-            return _mapper.Map<UserDTO>(userCreated);
+                return new Optional<UserDTO>();
+            }
+
+            var sendedHashedPassword = _argon2IdHasher.Hash(user.Password);
+
+            if (sendedHashedPassword != userExists.Password)
+                user.SetPassword(sendedHashedPassword);
+
+            var userUpdated = await _userRepository.UpdateAsync(user);
+
+            return _mapper.Map<UserDTO>(userUpdated);
         }
-
         public async Task RemoveAsync(Guid id)
-        {
-           await _userRepository.Remove(id);
-        }
+            => await _userRepository.RemoveAsync(id);
 
-        public async Task<UserDTO> Get(Guid id)
+        public async Task<Optional<UserDTO>> GetAsync(Guid id)
         {
-            var user = await _userRepository.Get(id);
+            var user = await _userRepository.GetAsync(id);
 
             return _mapper.Map<UserDTO>(user);
         }
 
-        public async Task<List<UserDTO>> GetAll()
+        public async Task<Optional<IList<UserDTO>>> GetAllAsync()
         {
-            var allUsers = await _userRepository.GetAll();
-
-            return _mapper.Map<List<UserDTO>>(allUsers);
-        }
-
-        public async Task<UserDTO> GetByEmailAsync(string email)
-        {
-            var user = await _userRepository.GetByEmail(email);
-
-            return _mapper.Map<UserDTO>(user);
-        }
-
-        public async Task<List<UserDTO>> SearchByEmailAsync(string email)
-        {
-            var allUsers = await _userRepository.SearchByEmail(email);
-
-            return _mapper.Map<List<UserDTO>>(allUsers);
-        }
-
-        public async Task<List<UserDTO>> SearchByNameAsync(string name)
-        {
-            Expression<Func<User, bool>> filter = u => u.Name.ToLower().Contains(name.ToLower());
-
-            var allUsers = await _userRepository.SearchByName(name);
+            var allUsers = await _userRepository.GetAllAsync();
             var allUsersDTO = _mapper.Map<IList<UserDTO>>(allUsers);
 
-            return _mapper.Map<List<UserDTO>>(allUsers);
+            return new Optional<IList<UserDTO>>(allUsersDTO);
+        }
+
+        public async Task<Optional<IList<UserDTO>>> SearchByNameAsync(string name)
+        {
+            Expression<Func<User, bool>> filter = u
+                => u.Name.ToLower().Contains(name.ToLower());
+
+            var allUsers = await _userRepository.SearchAsync(filter);
+            var allUsersDTO = _mapper.Map<IList<UserDTO>>(allUsers);
+
+            return new Optional<IList<UserDTO>>(allUsersDTO);
+        }
+
+        public async Task<Optional<IList<UserDTO>>> SearchByEmailAsync(string email)
+        {
+            Expression<Func<User, bool>> filter = user
+                => user.Email.ToLower().Contains(email.ToLower());
+
+            var allUsers = await _userRepository.SearchAsync(filter);
+            var allUsersDTO = _mapper.Map<IList<UserDTO>>(allUsers);
+
+            return new Optional<IList<UserDTO>>(allUsersDTO);
+        }
+
+        public async Task<Optional<UserDTO>> GetByEmailAsync(string email)
+        {
+            Expression<Func<User, bool>> filter = user
+                => user.Email.ToLower() == email.ToLower();
+
+            var user = await _userRepository.GetAsync(filter);
+            var userDTO = _mapper.Map<UserDTO>(user);
+
+            return new Optional<UserDTO>(userDTO);
         }
     }
 }

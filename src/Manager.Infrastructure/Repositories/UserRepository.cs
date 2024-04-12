@@ -18,7 +18,7 @@ namespace Manager.Infrastructure.Repositories
             _context = context;
         }
 
-        public virtual async Task<User> Create(User obj)
+        public virtual async Task<User> Createasync(User obj)
         {
             _context.Add(obj);
             await _context.SaveChangesAsync();

@@ -9,9 +9,16 @@ namespace Manager.Services.DTO
 {
     public class UserDTO
     {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+
+        [JsonIgnore]
+        public string Password { get; set; }
+
         public UserDTO()
-        {}
-        
+        { }
+
         public UserDTO(Guid id, string name, string email, string password)
         {
             Id = id;
@@ -19,14 +26,5 @@ namespace Manager.Services.DTO
             Email = email;
             Password = password;
         }
-
-        public Guid Id { get; set; }
-
-        public string Name { get; set; }
-
-        public string Email { get; set; }
-
-        [JsonIgnore]
-        public string Password { get; set; }
     }
 }
