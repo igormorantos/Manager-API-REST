@@ -4,11 +4,10 @@ namespace Manager.API.ViewModels
 {
     public class LoginViewModel
     {
-        [Required(ErrorMessage = "Login Não pode ser vazio")]
-        
+        [Required(ErrorMessage = "O login não pode vazio.")]
         public string Login { get; set; }
 
-        [Required(ErrorMessage = "A senha Não pode ser vazia")]
+        [Required(ErrorMessage = "A senha não pode vazio.")]
         public string Password { get; set; }
     }
 }
