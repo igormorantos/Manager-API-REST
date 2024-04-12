@@ -2,20 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <UserSecretsId>e84e08a3-72b6-4009-b933-1f4b57bd82d4</UserSecretsId>
+    <UserSecretsId>c6e1e20b-38d4-4725-b92c-46eff0fb5174</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EscNet" Version="3.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.0.0" />
-	<ProjectReference Include="..\Manager.Infrastructure\Manager.Infrastructure.csproj" />
-	<ProjectReference Include="..\Manager.Services\Manager.Services.csproj" />
+    <PackageReference Include="EscNet" Version="6.0.1" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.1" NoWarn="NU1605" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.1" NoWarn="NU1605" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" Version="3.1.22" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Manager.Core\Manager.Core.csproj" />
+    <ProjectReference Include="..\Manager.Services\Manager.Services.csproj" />
   </ItemGroup>
 
 </Project>
