@@ -10,6 +10,9 @@
 
 
 ##  Sobre o Projeto
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c0a17f7111114e808905059b68e7a23f)](https://app.codacy.com/gh/igormorantos/Manager-API-REST?utm_source=github.com&utm_medium=referral&utm_content=igormorantos/Manager-API-REST&utm_campaign=Badge_Grade)
+
 This is a repository used as a base to show the operation of Issues, Discussions, Wiki and other GitHub resources in addition to code versioning..
 
 The project inserted into this repository is a pre-existing template and is used as a basis for displaying statistical data about it.
