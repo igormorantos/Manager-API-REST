@@ -8,8 +8,6 @@
 <h1 align="center">Manager API REST</h1>
 <p align="center"><i>Uma API de gerenciamento de usuarios, criada com boas práticas de desenvolvimento e arquitetura!.</i></p>
 
-Para finalizar o nosso README podemos adicionar estatísticas sobre o repositório como Linguagem mais utilizada, Número de linguagens presentes, qualidade do código e muitas outras através da ferramenta oferecida pela Codacy. Não abordaremos aqui como cadastrar seu repositório e ter acesso a estas estatísticas já que no site deles já tem uma documentação completa sobre isto. Veja como fica:
-
 
 ##  Sobre o Projeto
 This is a repository used as a base to show the operation of Issues, Discussions, Wiki and other GitHub resources in addition to code versioning..
